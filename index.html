@@ -1,155 +1,222 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Diário de Estudos</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SDKs do Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-</head>
-<body class="bg-slate-900 text-slate-100 min-h-screen p-6 font-sans">
-  <div class="max-w-2xl mx-auto space-y-6">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyFlow Azure - Diário & Timer na Nuvem</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Cabeçalho & Cronómetro -->
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 text-center space-y-4">
-      <h1 class="text-2xl font-bold text-blue-400">⏱️ Diário de Estudos (Sincronizado)</h1>
-      <div id="display" class="text-5xl font-mono font-bold tracking-wider text-emerald-400">00:00:00</div>
-      <button id="timerBtn" onclick="toggleTimer()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition">
-        Iniciar Estudo
-      </button>
-    </div>
+    <!-- Firebase SDKs (Versão Compatível Web) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <!-- Formulário de Registo -->
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
-      <h2 class="text-xl font-semibold">Registar Sessão</h2>
-      <div>
-        <label class="block text-sm text-slate-400 mb-1">O que estudou hoje?</label>
-        <input type="text" id="materia" placeholder="Ex: Java, Redes, Azure..." class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Meta Planeada (Horas)</label>
-          <input type="number" id="meta" value="2" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
-        </div>
-        <div>
-          <label class="block text-sm text-slate-400 mb-1">Tempo Estudado (Horas)</label>
-          <input type="number" id="tempo" step="0.01" placeholder="Ex: 1.5" class="w-full bg-slate-900 border border-slate-700 rounded p-2 text-white">
-        </div>
-      </div>
-      <button onclick="salvarSessao()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded transition">
-        Guardar na Nuvem
-      </button>
-    </div>
-
-    <!-- Histórico de Estudos -->
-    <div class="bg-slate-800 p-6 rounded-xl border border-slate-700 space-y-4">
-      <h2 class="text-xl font-semibold">Histórico de Estudos</h2>
-      <div id="historico" class="space-y-2 max-h-60 overflow-y-auto">
-        <p class="text-slate-400 text-sm">A carregar dados do Firebase...</p>
-      </div>
-    </div>
-
-  </div>
-
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyC0rK78NwUU7GUqq9Vwfywfw3gBeOrbJ-w",
-      authDomain: "diario-estudos-app.firebaseapp.com",
-      projectId: "diario-estudos-app",
-      storageBucket: "diario-estudos-app.firebasestorage.app",
-      messagingSenderId: "736000609268",
-      appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
-    };
-
-    try {
-      firebase.initializeApp(firebaseConfig);
-      var db = firebase.firestore();
-    } catch (err) {
-      document.getElementById('historico').innerHTML = `<p class="text-rose-400 text-sm">Erro de Inicialização: ${err.message}</p>`;
-    }
-
-    let timer = null;
-    let seconds = 0;
-
-    function toggleTimer() {
-      const btn = document.getElementById('timerBtn');
-      if (timer) {
-        clearInterval(timer);
-        timer = null;
-        btn.innerText = 'Iniciar Estudo';
-        btn.className = 'bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition';
-        document.getElementById('tempo').value = (seconds / 3600).toFixed(2);
-      } else {
-        timer = setInterval(() => {
-          seconds++;
-          const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-          const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-          const s = String(seconds % 60).padStart(2, '0');
-          document.getElementById('display').innerText = `${h}:${m}:${s}`;
-        }, 1000);
-        btn.innerText = 'Pausar / Finalizar';
-        btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition';
-      }
-    }
-
-    async function salvarSessao() {
-      const materia = document.getElementById('materia').value;
-      const meta = parseFloat(document.getElementById('meta').value) || 0;
-      const tempo = parseFloat(document.getElementById('tempo').value) || 0;
-
-      if (!materia) {
-        alert('Por favor, informe a matéria estudada.');
-        return;
-      }
-
-      try {
-        await db.collection('estudos').add({
-          materia: materia,
-          meta: meta,
-          tempo: tempo,
-          data: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
-        });
-
-        document.getElementById('materia').value = '';
-        document.getElementById('tempo').value = '';
-        seconds = 0;
-        document.getElementById('display').innerText = '00:00:00';
-      } catch (e) {
-        alert('Erro ao guardar no Firebase: ' + e.message);
-      }
-    }
-
-    // Leitura dos dados
-    if (db) {
-      db.collection('estudos').onSnapshot((snapshot) => {
-        const container = document.getElementById('historico');
-        if (snapshot.empty) {
-          container.innerHTML = '<p class="text-slate-400 text-sm">Nenhum registo encontrado.</p>';
-          return;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        azure: {
+                            50: '#f0f6ff',
+                            100: '#e0edff',
+                            500: '#0078d4',
+                            600: '#0062b1',
+                            700: '#004e8c',
+                        }
+                    }
+                }
+            }
         }
-        
-        container.innerHTML = '';
-        snapshot.forEach((doc) => {
-          const item = doc.data();
-          const div = document.createElement('div');
-          div.className = 'bg-slate-900 p-3 rounded flex justify-between items-center text-sm border border-slate-700';
-          div.innerHTML = `
-            <div>
-              <div class="font-bold text-blue-400">${item.materia}</div>
-              <div class="text-xs text-slate-400">${item.data || ''}</div>
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-graduation-cap text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 leading-tight">StudyFlow Azure</h1>
+                    <p class="text-xs text-slate-500 font-medium">Sincronizado na Nuvem (Firebase)</p>
+                </div>
             </div>
-            <div class="text-right">
-              <span class="text-emerald-400 font-mono font-bold">${item.tempo}h</span> / <span class="text-slate-400">${item.meta}h meta</span>
+
+            <div class="flex items-center gap-3">
+                <!-- Azure Guide Modal Trigger Button -->
+                <button onclick="openAzureModal()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-azure-700 bg-azure-50 hover:bg-azure-100 border border-azure-500/20 rounded-xl transition duration-200">
+                    <i class="fa-brands fa-microsoft text-azure-600"></i>
+                    <span>Como publicar no Azure (Grátis)</span>
+                </button>
+
+                <!-- User Profile / Auth State Container -->
+                <div id="authContainer">
+                    <div class="animate-pulse bg-slate-200 h-9 w-32 rounded-xl"></div>
+                </div>
             </div>
-          `;
-          container.appendChild(div);
-        });
-      }, (error) => {
-        document.getElementById('historico').innerHTML = `<p class="text-rose-400 text-sm">Erro ao ligar ao Firestore: ${error.message}</p>`;
-      });
-    }
-  </script>
-</body>
-</html>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+        <!-- Unauthenticated Banner (shown when not logged in) -->
+        <div id="loggedOutBanner" class="hidden bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-10">
+                <i class="fa-brands fa-microsoft text-9xl"></i>
+            </div>
+            <div class="relative z-10 max-w-2xl">
+                <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">Nuvem Pronta & Sincronizada</span>
+                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Acompanhe sua rotina de estudos de qualquer lugar</h2>
+                <p class="text-blue-100 text-sm sm:text-base mb-6">Faça login com sua conta Google ou Microsoft para salvar o histórico no banco de dados e sincronizar em tempo real entre seus dispositivos.</p>
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="loginWith('google')" class="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-800 font-semibold text-sm rounded-xl hover:bg-slate-100 shadow-md transition">
+                        <i class="fa-brands fa-google text-red-500"></i> Entrar com Gmail / Google
+                    </button>
+                    <button onclick="loginWith('m365')" class="flex items-center gap-2 px-5 py-2.5 bg-azure-600 text-white font-semibold text-sm rounded-xl hover:bg-azure-700 shadow-md transition">
+                        <i class="fa-brands fa-microsoft text-white"></i> Entrar com Microsoft 365
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Content (Visible after Login) -->
+        <div id="dashboard" class="space-y-8">
+            
+            <!-- Quick Summary Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Estudado</p>
+                        <h3 id="statTotalHours" class="text-2xl font-bold text-slate-800 mt-1">0.0h</h3>
+                        <p class="text-xs text-slate-500 mt-1">Acumulado na nuvem</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-xl">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Sessões Registradas</p>
+                        <h3 id="statTotalSessions" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                        <p class="text-xs text-slate-500 mt-1">Dias salvos no banco</p>
+                    </div>
+                    <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-xl">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Desempenho Geral</p>
+                        <h3 id="statAvgGoal" class="text-2xl font-bold text-slate-800 mt-1">0%</h3>
+                        <p class="text-xs text-slate-500 mt-1">Meta x Horas cumpridas</p>
+                    </div>
+                    <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl">
+                        <i class="fa-solid fa-bullseye"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two-column Layout: Left (Timer & Form) / Right (History) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                
+                <!-- Left Column (5 Cols): Timer & Daily Entry Form -->
+                <div class="lg:col-span-5 space-y-6">
+                    
+                    <!-- Timer Component -->
+                    <div class="bg-gradient-to-b from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-stopwatch text-indigo-400"></i> Cronômetro de Estudo
+                            </span>
+                            <span id="timerStatus" class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300">
+                                PRONTO
+                            </span>
+                        </div>
+
+                        <!-- Big Digital Display -->
+                        <div class="text-center my-6">
+                            <div id="timerDisplay" class="font-mono text-5xl sm:text-6xl font-bold tracking-tight text-white drop-shadow-md">
+                                00:00:00
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Clique em Iniciar para começar a contabilizar</p>
+                        </div>
+
+                        <!-- Timer Control Buttons -->
+                        <div class="flex items-center justify-center gap-3">
+                            <button id="btnStart" onclick="startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-play text-xs"></i> Iniciar
+                            </button>
+                            <button id="btnPause" onclick="pauseTimer()" disabled class="flex-1 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-pause text-xs"></i> Pausar
+                            </button>
+                            <button id="btnStop" onclick="stopAndTransferTimer()" disabled class="bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2" title="Transferir tempo para o formulário">
+                                <i class="fa-solid fa-arrow-down text-xs"></i> Salvar Tempo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Daily Study Entry Form -->
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
+                        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-pen-to-square text-azure-600"></i> Registrar Novo Dia de Estudo
+                        </h3>
+
+                        <form id="studyForm" onsubmit="handleSaveEntry(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Data</label>
+                                <input type="date" id="inputDate" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Conteúdo / Matéria Estudada</label>
+                                <textarea id="inputTopic" rows="3" required placeholder="Ex: Programação Java, Arquitetura Azure, Cálculo..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition resize-none"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Meta do Dia (Horas)</label>
+                                    <input type="number" id="inputPlannedHours" step="0.5" min="0.1" placeholder="Ex: 4.0" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Horas Cumpridas</label>
+                                    <input type="number" id="inputActualHours" step="0.01" min="0" placeholder="Ex: 3.5" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition">
+                                </div>
+                            </div>
+
+                            <button type="submit" id="btnSaveEntry" class="w-full bg-azure-600 hover:bg-azure-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-cloud-arrow-up"></i> Salvar na Nuvem
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+
+                <!-- Right Column (7 Cols): History Table & Visual Logs -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col h-full">
+                        <div class="flex items-center justify
