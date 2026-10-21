@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Diário de Estudos</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SDKs do Firebase (Versão Compatível) -->
+  <!-- SDKs do Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 </head>
@@ -54,7 +54,6 @@
   </div>
 
   <script>
-    // Configuração do Firebase extraída do seu painel
     const firebaseConfig = {
       apiKey: "AIzaSyC0rK78NwUU7GUqq9Vwfywfw3gBeOrbJ-w",
       authDomain: "diario-estudos-app.firebaseapp.com",
@@ -64,11 +63,13 @@
       appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
     };
 
-    // Inicialização do Firebase e Firestore
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    try {
+      firebase.initializeApp(firebaseConfig);
+      var db = firebase.firestore();
+    } catch (err) {
+      document.getElementById('historico').innerHTML = `<p class="text-rose-400 text-sm">Erro de Inicialização: ${err.message}</p>`;
+    }
 
-    // Lógica do Cronómetro
     let timer = null;
     let seconds = 0;
 
@@ -86,4 +87,69 @@
           const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
           const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
           const s = String(seconds % 60).padStart(2, '0');
-          document.getElementById('display
+          document.getElementById('display').innerText = `${h}:${m}:${s}`;
+        }, 1000);
+        btn.innerText = 'Pausar / Finalizar';
+        btn.className = 'bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 px-8 rounded-lg shadow-lg transition';
+      }
+    }
+
+    async function salvarSessao() {
+      const materia = document.getElementById('materia').value;
+      const meta = parseFloat(document.getElementById('meta').value) || 0;
+      const tempo = parseFloat(document.getElementById('tempo').value) || 0;
+
+      if (!materia) {
+        alert('Por favor, informe a matéria estudada.');
+        return;
+      }
+
+      try {
+        await db.collection('estudos').add({
+          materia: materia,
+          meta: meta,
+          tempo: tempo,
+          data: new Date().toLocaleDateString('pt-BR') + ' ' + new Date().toLocaleTimeString('pt-BR')
+        });
+
+        document.getElementById('materia').value = '';
+        document.getElementById('tempo').value = '';
+        seconds = 0;
+        document.getElementById('display').innerText = '00:00:00';
+      } catch (e) {
+        alert('Erro ao guardar no Firebase: ' + e.message);
+      }
+    }
+
+    // Leitura dos dados
+    if (db) {
+      db.collection('estudos').onSnapshot((snapshot) => {
+        const container = document.getElementById('historico');
+        if (snapshot.empty) {
+          container.innerHTML = '<p class="text-slate-400 text-sm">Nenhum registo encontrado.</p>';
+          return;
+        }
+        
+        container.innerHTML = '';
+        snapshot.forEach((doc) => {
+          const item = doc.data();
+          const div = document.createElement('div');
+          div.className = 'bg-slate-900 p-3 rounded flex justify-between items-center text-sm border border-slate-700';
+          div.innerHTML = `
+            <div>
+              <div class="font-bold text-blue-400">${item.materia}</div>
+              <div class="text-xs text-slate-400">${item.data || ''}</div>
+            </div>
+            <div class="text-right">
+              <span class="text-emerald-400 font-mono font-bold">${item.tempo}h</span> / <span class="text-slate-400">${item.meta}h meta</span>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      }, (error) => {
+        document.getElementById('historico').innerHTML = `<p class="text-rose-400 text-sm">Erro ao ligar ao Firestore: ${error.message}</p>`;
+      });
+    }
+  </script>
+</body>
+</html>
