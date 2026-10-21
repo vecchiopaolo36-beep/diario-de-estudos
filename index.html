@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyFlow Azure - Diário & Timer na Nuvem</title>
+    <title>StudyFlow Azure - Diário de Estudos</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -11,7 +11,7 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs (Versão Compatível Web) -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -20,9 +20,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
                     colors: {
                         azure: {
                             50: '#f0f6ff',
@@ -37,16 +35,9 @@
         }
     </script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
@@ -60,20 +51,18 @@
                 </div>
                 <div>
                     <h1 class="text-lg font-bold text-slate-900 leading-tight">StudyFlow Azure</h1>
-                    <p class="text-xs text-slate-500 font-medium">Sincronizado na Nuvem (Firebase)</p>
+                    <p class="text-xs text-slate-500 font-medium">Diário de Estudos & Cronômetro</p>
                 </div>
             </div>
 
             <div class="flex items-center gap-3">
-                <!-- Azure Guide Modal Trigger Button -->
                 <button onclick="openAzureModal()" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-azure-700 bg-azure-50 hover:bg-azure-100 border border-azure-500/20 rounded-xl transition duration-200">
                     <i class="fa-brands fa-microsoft text-azure-600"></i>
                     <span>Como publicar no Azure (Grátis)</span>
                 </button>
 
-                <!-- User Profile / Auth State Container -->
                 <div id="authContainer">
-                    <div class="animate-pulse bg-slate-200 h-9 w-32 rounded-xl"></div>
+                    <!-- Preenchido via JS -->
                 </div>
             </div>
         </div>
@@ -82,15 +71,12 @@
     <!-- Main Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
-        <!-- Unauthenticated Banner (shown when not logged in) -->
+        <!-- Banner de Login -->
         <div id="loggedOutBanner" class="hidden bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-            <div class="absolute -right-10 -bottom-10 opacity-10">
-                <i class="fa-brands fa-microsoft text-9xl"></i>
-            </div>
             <div class="relative z-10 max-w-2xl">
-                <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">Nuvem Pronta & Sincronizada</span>
-                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Acompanhe sua rotina de estudos de qualquer lugar</h2>
-                <p class="text-blue-100 text-sm sm:text-base mb-6">Faça login com sua conta Google ou Microsoft para salvar o histórico no banco de dados e sincronizar em tempo real entre seus dispositivos.</p>
+                <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-semibold mb-3">Azure & Firebase Sync</span>
+                <h2 class="text-2xl sm:text-3xl font-bold mb-2">Acompanhe sua rotina de estudos</h2>
+                <p class="text-blue-100 text-sm sm:text-base mb-6">Conecte sua conta para salvar seus dados na nuvem e sincronizar entre navegadores.</p>
                 <div class="flex flex-wrap gap-3">
                     <button onclick="loginWith('google')" class="flex items-center gap-2 px-5 py-2.5 bg-white text-slate-800 font-semibold text-sm rounded-xl hover:bg-slate-100 shadow-md transition">
                         <i class="fa-brands fa-google text-red-500"></i> Entrar com Gmail / Google
@@ -102,16 +88,16 @@
             </div>
         </div>
 
-        <!-- Dashboard Content (Visible after Login) -->
+        <!-- Dashboard Body -->
         <div id="dashboard" class="space-y-8">
             
-            <!-- Quick Summary Cards -->
+            <!-- Cards de Resumo -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
                 <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Estudado</p>
                         <h3 id="statTotalHours" class="text-2xl font-bold text-slate-800 mt-1">0.0h</h3>
-                        <p class="text-xs text-slate-500 mt-1">Acumulado na nuvem</p>
+                        <p class="text-xs text-slate-500 mt-1">Acumulado registrado</p>
                     </div>
                     <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-xl">
                         <i class="fa-solid fa-clock"></i>
@@ -122,7 +108,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Sessões Registradas</p>
                         <h3 id="statTotalSessions" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
-                        <p class="text-xs text-slate-500 mt-1">Dias salvos no banco</p>
+                        <p class="text-xs text-slate-500 mt-1">Dias salvos</p>
                     </div>
                     <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-xl">
                         <i class="fa-solid fa-calendar-check"></i>
@@ -133,7 +119,7 @@
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Desempenho Geral</p>
                         <h3 id="statAvgGoal" class="text-2xl font-bold text-slate-800 mt-1">0%</h3>
-                        <p class="text-xs text-slate-500 mt-1">Meta x Horas cumpridas</p>
+                        <p class="text-xs text-slate-500 mt-1">Meta vs Realizado</p>
                     </div>
                     <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl">
                         <i class="fa-solid fa-bullseye"></i>
@@ -141,13 +127,12 @@
                 </div>
             </div>
 
-            <!-- Two-column Layout: Left (Timer & Form) / Right (History) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
                 
-                <!-- Left Column (5 Cols): Timer & Daily Entry Form -->
+                <!-- Cronômetro e Formulário -->
                 <div class="lg:col-span-5 space-y-6">
                     
-                    <!-- Timer Component -->
+                    <!-- Cronômetro -->
                     <div class="bg-gradient-to-b from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-xl border border-slate-700 relative overflow-hidden">
                         <div class="flex justify-between items-center mb-4">
                             <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
@@ -158,7 +143,6 @@
                             </span>
                         </div>
 
-                        <!-- Big Digital Display -->
                         <div class="text-center my-6">
                             <div id="timerDisplay" class="font-mono text-5xl sm:text-6xl font-bold tracking-tight text-white drop-shadow-md">
                                 00:00:00
@@ -166,7 +150,6 @@
                             <p class="text-xs text-slate-400 mt-2">Clique em Iniciar para começar a contabilizar</p>
                         </div>
 
-                        <!-- Timer Control Buttons -->
                         <div class="flex items-center justify-center gap-3">
                             <button id="btnStart" onclick="startTimer()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-play text-xs"></i> Iniciar
@@ -174,13 +157,13 @@
                             <button id="btnPause" onclick="pauseTimer()" disabled class="flex-1 bg-amber-600 hover:bg-amber-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-pause text-xs"></i> Pausar
                             </button>
-                            <button id="btnStop" onclick="stopAndTransferTimer()" disabled class="bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2" title="Transferir tempo para o formulário">
+                            <button id="btnStop" onclick="stopAndTransferTimer()" disabled class="bg-slate-700 hover:bg-slate-600 disabled:opacity-40 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition shadow-md flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-arrow-down text-xs"></i> Salvar Tempo
                             </button>
                         </div>
                     </div>
 
-                    <!-- Daily Study Entry Form -->
+                    <!-- Formulário -->
                     <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-4">
                         <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
                             <i class="fa-solid fa-pen-to-square text-azure-600"></i> Registrar Novo Dia de Estudo
@@ -189,34 +172,401 @@
                         <form id="studyForm" onsubmit="handleSaveEntry(event)" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Data</label>
-                                <input type="date" id="inputDate" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition">
+                                <input type="date" id="inputDate" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 text-sm outline-none transition">
                             </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Conteúdo / Matéria Estudada</label>
-                                <textarea id="inputTopic" rows="3" required placeholder="Ex: Programação Java, Arquitetura Azure, Cálculo..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition resize-none"></textarea>
+                                <textarea id="inputTopic" rows="3" required placeholder="Ex: Programação Java, Arquitetura Azure, Cálculo..." class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 text-sm outline-none transition resize-none"></textarea>
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-600 mb-1">Meta do Dia (Horas)</label>
-                                    <input type="number" id="inputPlannedHours" step="0.5" min="0.1" placeholder="Ex: 4.0" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition">
+                                    <input type="number" id="inputPlannedHours" step="0.5" min="0.1" placeholder="Ex: 4.0" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 text-sm outline-none transition">
                                 </div>
                                 <div>
                                     <label class="block text-xs font-semibold text-slate-600 mb-1">Horas Cumpridas</label>
-                                    <input type="number" id="inputActualHours" step="0.01" min="0" placeholder="Ex: 3.5" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 focus:border-azure-500 text-sm outline-none transition">
+                                    <input type="number" id="inputActualHours" step="0.01" min="0" placeholder="Ex: 3.5" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-azure-500 text-sm outline-none transition">
                                 </div>
                             </div>
 
                             <button type="submit" id="btnSaveEntry" class="w-full bg-azure-600 hover:bg-azure-700 text-white font-semibold py-3 px-4 rounded-xl shadow-md transition duration-200 flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-cloud-arrow-up"></i> Salvar na Nuvem
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Registro
                             </button>
                         </form>
                     </div>
 
                 </div>
 
-                <!-- Right Column (7 Cols): History Table & Visual Logs -->
+                <!-- Histórico -->
                 <div class="lg:col-span-7 space-y-6">
                     <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm flex flex-col h-full">
-                        <div class="flex items-center justify
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900">Histórico de Estudos</h3>
+                                <p class="text-xs text-slate-500">Seus registros salvos</p>
+                            </div>
+                            <button onclick="clearAllData()" class="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> Limpar dados
+                            </button>
+                        </div>
+
+                        <div id="historyContainer" class="space-y-4 overflow-y-auto max-h-[600px] custom-scrollbar pr-1">
+                            <!-- Preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Modal Azure Tutorial -->
+    <div id="azureModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-slate-200 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base">Como Publicar no Azure Static Web Apps</h3>
+                <button onclick="closeAzureModal()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 text-sm text-slate-600">
+                <p>1. Salve este arquivo como <code>index.html</code> no seu repositório do GitHub.</p>
+                <p>2. No Portal do Azure, crie um recurso do tipo <strong>Static Web Apps</strong>.</p>
+                <p>3. Escolha a região <strong>East US</strong> para garantir compatibilidade com a assinatura de estudantes.</p>
+            </div>
+            <div class="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
+                <button onclick="closeAzureModal()" class="px-5 py-2 bg-slate-800 text-white text-xs font-semibold rounded-xl">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyC0rK78NwUU7GUqq9Vwfywfw3gBeOrbJ-w",
+            authDomain: "diario-estudos-app.firebaseapp.com",
+            projectId: "diario-estudos-app",
+            storageBucket: "diario-estudos-app.firebasestorage.app",
+            messagingSenderId: "736000609268",
+            appId: "1:736000609268:web:08ac8c9b183274839ac7a1"
+        };
+
+        // Global State
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let studyEntries = [];
+
+        // Timer State
+        let timerInterval = null;
+        let timerSeconds = 0;
+        let isTimerRunning = false;
+
+        // --- TIMER LOGIC (Instantly Available) ---
+        function updateTimerDisplay() {
+            const hrs = Math.floor(timerSeconds / 3600);
+            const mins = Math.floor((timerSeconds % 3600) / 60);
+            const secs = timerSeconds % 60;
+            document.getElementById('timerDisplay').innerText = 
+                String(hrs).padStart(2, '0') + ':' +
+                String(mins).padStart(2, '0') + ':' +
+                String(secs).padStart(2, '0');
+        }
+
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            document.getElementById('timerStatus').innerText = "EM ANDAMENTO";
+            document.getElementById('timerStatus').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+            document.getElementById('btnStart').disabled = true;
+            document.getElementById('btnPause').disabled = false;
+            document.getElementById('btnStop').disabled = false;
+
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            if (!isTimerRunning) return;
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('timerStatus').innerText = "PAUSADO";
+            document.getElementById('timerStatus').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30";
+            document.getElementById('btnStart').disabled = false;
+            document.getElementById('btnPause').disabled = true;
+        }
+
+        function stopAndTransferTimer() {
+            pauseTimer();
+            const hoursCalculated = (timerSeconds / 3600).toFixed(2);
+            document.getElementById('inputActualHours').value = hoursCalculated;
+            timerSeconds = 0;
+            updateTimerDisplay();
+            document.getElementById('timerStatus').innerText = "PRONTO";
+            document.getElementById('timerStatus').className = "px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300";
+            document.getElementById('btnStop').disabled = true;
+            showCustomToast(`Tempo de ${hoursCalculated}h inserido no formulário!`);
+        }
+
+        // --- STORAGE FALLBACK LOGIC ---
+        function loadLocalEntries() {
+            const saved = localStorage.getItem('studyflow_local_entries');
+            if (saved) {
+                try { studyEntries = JSON.parse(saved); } catch(e) { studyEntries = []; }
+            }
+            renderDashboard();
+        }
+
+        function saveLocalEntries() {
+            localStorage.setItem('studyflow_local_entries', JSON.stringify(studyEntries));
+            renderDashboard();
+        }
+
+        // --- FIREBASE INIT & SYNC ---
+        function initFirebaseSafely() {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    firebase.initializeApp(firebaseConfig);
+                    auth = firebase.auth();
+                    db = firebase.firestore();
+
+                    auth.onAuthStateChanged(user => {
+                        currentUser = user;
+                        renderAuthUI();
+                        if (user) {
+                            listenToCloudEntries(user.uid);
+                        } else {
+                            loadLocalEntries();
+                        }
+                    });
+                } else {
+                    renderAuthUI();
+                    loadLocalEntries();
+                }
+            } catch(e) {
+                console.warn("Firebase não inicializado, usando LocalStorage:", e);
+                renderAuthUI();
+                loadLocalEntries();
+            }
+        }
+
+        function listenToCloudEntries(uid) {
+            if (!db) return;
+            db.collection('estudos').where('userId', '==', uid)
+                .onSnapshot(snapshot => {
+                    studyEntries = [];
+                    snapshot.forEach(doc => {
+                        studyEntries.push({ id: doc.id, ...doc.data() });
+                    });
+                    studyEntries.sort((a,b) => new Date(b.date) - new Date(a.date));
+                    renderDashboard();
+                }, err => {
+                    console.error("Erro cloud sync:", err);
+                    loadLocalEntries();
+                });
+        }
+
+        // --- AUTH ACTIONS ---
+        function loginWith(providerName) {
+            if (!auth) {
+                alert("Serviço de login indisponível. Seus dados estão sendo salvos localmente no seu navegador.");
+                return;
+            }
+            let provider = providerName === 'google' 
+                ? new firebase.auth.GoogleAuthProvider() 
+                : new firebase.auth.OAuthProvider('microsoft.com');
+
+            auth.signInWithPopup(provider).catch(err => {
+                alert("Erro ao fazer login: " + err.message);
+            });
+        }
+
+        function logout() {
+            if (auth) auth.signOut();
+            currentUser = null;
+            renderAuthUI();
+            loadLocalEntries();
+        }
+
+        function renderAuthUI() {
+            const container = document.getElementById('authContainer');
+            if (currentUser) {
+                const photo = currentUser.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.uid}`;
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 bg-slate-100 p-1.5 pr-3 rounded-xl border border-slate-200">
+                        <img src="${photo}" class="w-8 h-8 rounded-lg bg-slate-300 object-cover">
+                        <span class="text-xs font-bold text-slate-800">${escapeHtml(currentUser.displayName || "Usuário")}</span>
+                        <button onclick="logout()" class="ml-2 text-slate-400 hover:text-red-500"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <button onclick="loginWith('google')" class="text-xs font-semibold px-3 py-2 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 text-slate-700 transition flex items-center gap-1.5">
+                            <i class="fa-brands fa-google text-red-500"></i> Gmail
+                        </button>
+                        <button onclick="loginWith('m365')" class="text-xs font-semibold px-3 py-2 bg-azure-600 text-white rounded-xl hover:bg-azure-700 transition flex items-center gap-1.5">
+                            <i class="fa-brands fa-microsoft"></i> M365
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // --- SAVE & DELETE HANDLERS ---
+        async function handleSaveEntry(e) {
+            e.preventDefault();
+            const date = document.getElementById('inputDate').value;
+            const topic = document.getElementById('inputTopic').value.trim();
+            const plannedHours = parseFloat(document.getElementById('inputPlannedHours').value);
+            const actualHours = parseFloat(document.getElementById('inputActualHours').value);
+
+            if (!date || !topic || isNaN(plannedHours) || isNaN(actualHours)) {
+                alert("Preencha todos os campos do diário.");
+                return;
+            }
+
+            const newEntry = {
+                id: Date.now().toString(),
+                date: date,
+                topic: topic,
+                plannedHours: plannedHours,
+                actualHours: actualHours,
+                userId: currentUser ? currentUser.uid : 'local'
+            };
+
+            if (currentUser && db) {
+                try {
+                    await db.collection('estudos').add({
+                        ...newEntry,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    showCustomToast("Salvo no banco de dados na nuvem!");
+                } catch(err) {
+                    studyEntries.unshift(newEntry);
+                    saveLocalEntries();
+                    showCustomToast("Salvo localmente no navegador.");
+                }
+            } else {
+                studyEntries.unshift(newEntry);
+                saveLocalEntries();
+                showCustomToast("Salvo localmente no navegador!");
+            }
+
+            document.getElementById('inputTopic').value = '';
+            document.getElementById('inputActualHours').value = '';
+            document.getElementById('inputPlannedHours').value = '';
+        }
+
+        async function deleteEntry(id) {
+            if (confirm("Excluir este registro?")) {
+                if (currentUser && db) {
+                    try { await db.collection('estudos').doc(id).delete(); } catch(e){}
+                }
+                studyEntries = studyEntries.filter(item => item.id !== id);
+                saveLocalEntries();
+            }
+        }
+
+        function clearAllData() {
+            if (confirm("Deseja apagar todos os registros da tela?")) {
+                studyEntries = [];
+                saveLocalEntries();
+            }
+        }
+
+        // --- RENDER DASHBOARD ---
+        function renderDashboard() {
+            const container = document.getElementById('historyContainer');
+            let totalHours = 0;
+            let totalGoalPercentage = 0;
+
+            studyEntries.forEach(item => {
+                totalHours += item.actualHours;
+                const ratio = Math.min((item.actualHours / item.plannedHours) * 100, 100);
+                totalGoalPercentage += ratio;
+            });
+
+            const avgGoal = studyEntries.length > 0 ? (totalGoalPercentage / studyEntries.length).toFixed(0) : 0;
+            document.getElementById('statTotalHours').innerText = `${totalHours.toFixed(1)}h`;
+            document.getElementById('statTotalSessions').innerText = studyEntries.length;
+            document.getElementById('statAvgGoal').innerText = `${avgGoal}%`;
+
+            if (studyEntries.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">
+                        <i class="fa-solid fa-book-open text-slate-300 text-4xl mb-3"></i>
+                        <p class="text-sm font-semibold text-slate-600">Nenhum registro encontrado</p>
+                        <p class="text-xs text-slate-400 mt-1">Insira uma sessão para iniciar seu histórico.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = studyEntries.map(item => {
+                const percent = Math.min(Math.round((item.actualHours / item.plannedHours) * 100), 100);
+                const isGoalReached = item.actualHours >= item.plannedHours;
+                const dateParts = item.date.split('-');
+                const formattedDate = dateParts.length === 3 ? `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}` : item.date;
+
+                return `
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200 hover:border-slate-300 transition space-y-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <span class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
+                                    <i class="fa-regular fa-calendar text-slate-400"></i> ${formattedDate}
+                                </span>
+                                <h4 class="font-bold text-slate-800 text-sm mt-2">${escapeHtml(item.topic)}</h4>
+                            </div>
+                            <button onclick="deleteEntry('${item.id}')" class="text-slate-400 hover:text-red-500 transition p-1">
+                                <i class="fa-solid fa-xmark text-sm"></i>
+                            </button>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs font-medium">
+                                <span class="text-slate-600">
+                                    Progresso: <strong>${item.actualHours.toFixed(1)}h</strong> de <strong>${item.plannedHours.toFixed(1)}h</strong>
+                                </span>
+                                <span class="${isGoalReached ? 'text-emerald-600' : 'text-azure-600'} font-bold">${percent}%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                                <div class="h-full rounded-full transition-all duration-500 ${isGoalReached ? 'bg-emerald-500' : 'bg-azure-500'}" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- PAGE LOAD ---
+        window.onload = function() {
+            document.getElementById('inputDate').valueAsDate = new Date();
+            initFirebaseSafely();
+        };
+
+        function openAzureModal() { document.getElementById('azureModal').classList.remove('hidden'); }
+        function closeAzureModal() { document.getElementById('azureModal').classList.add('hidden'); }
+
+        function showCustomToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = "fixed bottom-5 right-5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl z-50 text-xs font-semibold flex items-center gap-2";
+            toast.innerHTML = `<i class="fa-solid fa-circle-info text-azure-400"></i> ${msg}`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3500);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.innerText = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
